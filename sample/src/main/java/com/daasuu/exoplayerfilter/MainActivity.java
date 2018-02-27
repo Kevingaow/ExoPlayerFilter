@@ -16,27 +16,9 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 
 import com.daasuu.epf.EPlayerView;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.util.Util;
+import com.example.gaowei.filterplayer.ExoPlayerAdapter;
+import com.example.gaowei.filterplayer.FilterPlayer;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,12 +26,12 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private EPlayerView ePlayerView;
-    private SimpleExoPlayer player;
     private Button button;
     private SeekBar seekBar;
     private PlayerTimer playerTimer;
+    private EPlayerView mFilterPlayerView;
 
+    private FilterPlayer mFilterPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setUpViews();
         checkPermissionIfNecessary();
+        mFilterPlayer = new ExoPlayerAdapter();
     }
 
     private void checkPermissionIfNecessary() {
@@ -76,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        setUpSimpleExoPlayer();
+        mFilterPlayer.initialize(this, Constant.STREAM_URL_MP4_VOD_LONG);
+//        setUpSimpleExoPlayer();
         setUoGlPlayerView();
         setUpTimer();
     }
@@ -97,13 +81,13 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (player == null) return;
+                if (mFilterPlayer == null) return;
 
                 if (button.getText().toString().equals(MainActivity.this.getString(R.string.pause))) {
-                    player.setPlayWhenReady(false);
+                    mFilterPlayer.pause();
                     button.setText(R.string.play);
                 } else {
-                    player.setPlayWhenReady(true);
+                    mFilterPlayer.start();
                     button.setText(R.string.pause);
                 }
             }
@@ -114,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (player == null) return;
+                if (mFilterPlayer == null) return;
 
                 if (!fromUser) {
                     // We're not interested in programmatically generated changes to
@@ -122,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                player.seekTo(progress * 1000);
+                mFilterPlayer.seekTo(progress * 1000);
             }
 
             @Override
@@ -143,42 +127,17 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ePlayerView.setGlFilter(FilterType.createGlFilter(filterTypes.get(position), getApplicationContext()));
+                mFilterPlayerView.setGlFilter(FilterType.createGlFilter(filterTypes.get(position), getApplicationContext()));
             }
         });
     }
 
-
-    private void setUpSimpleExoPlayer() {
-
-        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-
-        // Measures bandwidth during playback. Can be null if not required.
-        DefaultBandwidthMeter defaultBandwidthMeter = new DefaultBandwidthMeter();
-        // Produces DataSource instances through which media data is loaded.
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "yourApplicationName"), defaultBandwidthMeter);
-        // Produces Extractor instances for parsing the media data.
-        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-        // This is the MediaSource representing the media to be played.
-        MediaSource videoSource = new ExtractorMediaSource(Uri.parse(Constant.STREAM_URL_MP4_VOD_LONG), dataSourceFactory, extractorsFactory, null, null);
-
-        // SimpleExoPlayer
-        player = ExoPlayerFactory.newSimpleInstance(this, trackSelector);
-        // Prepare the player with the source.
-        player.prepare(videoSource);
-        player.setPlayWhenReady(true);
-
-    }
-
-
     private void setUoGlPlayerView() {
-        ePlayerView = new EPlayerView(this);
-        ePlayerView.setSimpleExoPlayer(player);
-        ePlayerView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        ((MovieWrapperView) findViewById(R.id.layout_movie_wrapper)).addView(ePlayerView);
-        ePlayerView.onResume();
+        mFilterPlayerView = new EPlayerView(this);
+        mFilterPlayerView.setFilterPlayer(mFilterPlayer);
+        mFilterPlayerView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        ((MovieWrapperView) findViewById(R.id.layout_movie_wrapper)).addView(mFilterPlayerView);
+        mFilterPlayerView.onResume();
     }
 
 
@@ -187,8 +146,8 @@ public class MainActivity extends AppCompatActivity {
         playerTimer.setCallback(new PlayerTimer.Callback() {
             @Override
             public void onTick(long timeMillis) {
-                long position = player.getCurrentPosition();
-                long duration = player.getDuration();
+                long position = mFilterPlayer.getCurrentPosition();
+                long duration = mFilterPlayer.getDuration();
 
                 if (duration <= 0) return;
 
@@ -201,12 +160,12 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void releasePlayer() {
-        ePlayerView.onPause();
+        mFilterPlayerView.onPause();
         ((MovieWrapperView) findViewById(R.id.layout_movie_wrapper)).removeAllViews();
-        ePlayerView = null;
-        player.stop();
-        player.release();
-        player = null;
+        mFilterPlayerView = null;
+        mFilterPlayer.stop();
+        mFilterPlayer.release();
+        mFilterPlayer = null;
     }
 
 

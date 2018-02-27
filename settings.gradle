@@ -1,1 +1,1 @@
-include ':sample', ':epf'
+include ':sample', ':epf', ':mediacodecplayer', ':filterplayer'

@@ -26,4 +26,5 @@ dependencies {
 
 
     compile project(':epf')
+    compile project(path: ':filterplayer')
 }

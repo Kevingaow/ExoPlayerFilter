@@ -7,17 +7,19 @@ import android.util.AttributeSet;
 import com.daasuu.epf.chooser.EConfigChooser;
 import com.daasuu.epf.contextfactory.EContextFactory;
 import com.daasuu.epf.filter.GlFilter;
+import com.example.gaowei.filterplayer.FilterPlayer;
+import com.example.gaowei.filterplayer.FilterPlayerSurfaceChangeListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 
 /**
  * Created by sudamasayuki on 2017/05/16.
  */
-public class EPlayerView extends GLSurfaceView implements SimpleExoPlayer.VideoListener {
+public class EPlayerView extends GLSurfaceView implements FilterPlayerSurfaceChangeListener {
 
     private final static String TAG = EPlayerView.class.getSimpleName();
 
     private final EPlayerRenderer renderer;
-    private SimpleExoPlayer player;
+    private FilterPlayer mPlayer;
 
     private float videoAspect = 1f;
     private PlayerScaleType playerScaleType = PlayerScaleType.RESIZE_FIT_WIDTH;
@@ -37,14 +39,14 @@ public class EPlayerView extends GLSurfaceView implements SimpleExoPlayer.VideoL
 
     }
 
-    public EPlayerView setSimpleExoPlayer(SimpleExoPlayer player) {
-        if (this.player != null) {
-            this.player.release();
-            this.player = null;
+    public EPlayerView setFilterPlayer(FilterPlayer fp) {
+        if (mPlayer != null) {
+            mPlayer.release();
+            mPlayer = null;
         }
-        this.player = player;
-        this.player.addVideoListener(this);
-        this.renderer.setSimpleExoPlayer(player);
+        mPlayer = fp;
+        mPlayer.registerSurfaceChangeListener(this);
+        this.renderer.setFilterPlayer(mPlayer);
         return this;
     }
 
@@ -82,7 +84,7 @@ public class EPlayerView extends GLSurfaceView implements SimpleExoPlayer.VideoL
     // SimpleExoPlayer.VideoListener
 
     @Override
-    public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+    public void onSurfaceSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
         // Log.d(TAG, "width = " + width + " height = " + height + " unappliedRotationDegrees = " + unappliedRotationDegrees + " pixelWidthHeightRatio = " + pixelWidthHeightRatio);
         videoAspect = ((float) width / height) * pixelWidthHeightRatio;
         // Log.d(TAG, "videoAspect = " + videoAspect);

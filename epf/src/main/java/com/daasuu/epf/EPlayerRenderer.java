@@ -2,6 +2,7 @@ package com.daasuu.epf;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 import android.view.Surface;
@@ -9,6 +10,7 @@ import android.view.Surface;
 import com.daasuu.epf.filter.GlFilter;
 import com.daasuu.epf.filter.GlLookUpTableFilter;
 import com.daasuu.epf.filter.GlPreviewFilter;
+import com.example.gaowei.filterplayer.FilterPlayer;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -24,7 +26,7 @@ import static android.opengl.GLES20.glViewport;
  * Created by sudamasayuki on 2017/05/16.
  */
 
-class EPlayerRenderer extends EFrameBufferObjectRenderer implements SurfaceTexture.OnFrameAvailableListener {
+public class EPlayerRenderer extends EFrameBufferObjectRenderer implements SurfaceTexture.OnFrameAvailableListener {
 
     private static final String TAG = EPlayerRenderer.class.getSimpleName();
 
@@ -45,13 +47,14 @@ class EPlayerRenderer extends EFrameBufferObjectRenderer implements SurfaceTextu
 
     private GlFilter glFilter;
     private boolean isNewFilter;
-    private final EPlayerView glPreview;
+    private final GLSurfaceView glPreview;
 
     private float aspectRatio = 1f;
 
     private SimpleExoPlayer simpleExoPlayer;
+    private FilterPlayer mPlayer;
 
-    EPlayerRenderer(EPlayerView glPreview) {
+    EPlayerRenderer(GLSurfaceView glPreview) {
         super();
         Matrix.setIdentityM(STMatrix, 0);
         this.glPreview = glPreview;
@@ -100,7 +103,7 @@ class EPlayerRenderer extends EFrameBufferObjectRenderer implements SurfaceTextu
         previewFilter.setup();
 
         Surface surface = new Surface(previewTexture.getSurfaceTexture());
-        this.simpleExoPlayer.setVideoSurface(surface);
+        mPlayer.setVideoSurface(surface);
 
         Matrix.setLookAtM(VMatrix, 0,
                 0.0f, 0.0f, 5.0f,
@@ -178,8 +181,7 @@ class EPlayerRenderer extends EFrameBufferObjectRenderer implements SurfaceTextu
         glPreview.requestRender();
     }
 
-    void setSimpleExoPlayer(SimpleExoPlayer simpleExoPlayer) {
-        this.simpleExoPlayer = simpleExoPlayer;
+    void setFilterPlayer(FilterPlayer fp) {
+        mPlayer = fp;
     }
-
 }
